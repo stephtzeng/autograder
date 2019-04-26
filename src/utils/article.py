@@ -71,7 +71,7 @@ def main():
     path = '/Users/stephanie/data/newsela_article_corpus_2016-01-29/'
     library = Library(path)
     library.create_library()
-    print(library.library['zuckerberg-internet'].article_text(4.0, 'en'))
+    print(library.library['zuckerberg-internet'].article_text(4.0))
     print(library.library['zuckerberg-internet'].grade_levels)
 
 
