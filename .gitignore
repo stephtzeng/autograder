@@ -1,5 +1,6 @@
 # Our own configurations
 *.ipynb_checkpoints/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

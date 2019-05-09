@@ -1,5 +1,33 @@
 import pandas as pd
 from collections import defaultdict
+from nltk.tokenize import sent_tokenize
+from nltk.util import ngrams
+import nltk
+
+
+def get_article_text(path, slug, language, version):
+    """
+    Returns
+    :return:
+    """
+    txt = open(path + 'articles/' + slug + '.' + language + '.'
+               + str(version)
+               + '.txt', 'r')
+    return txt.read()
+
+
+def tokenize_sentences(path, slug, language, grade_level):
+    article_text = get_article_text(path, slug, language, grade_level)
+    sentence_tokenize_list = sent_tokenize(article_text)
+    all_words = []
+    for sentence in sentence_tokenize_list:
+        sentence = sentence.rstrip('.!?')
+        tokens = nltk.re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*\n", sentence)
+        all_words.append('<s>')
+        all_words.extend(tokens)
+        all_words.append('</s>')
+
+    return all_words
 
 
 class Article(object):
@@ -41,6 +69,17 @@ class Article(object):
                    + '.txt', 'r')
         return txt.read()
 
+    def n_grams(self, grade_level, n):
+        """
+        Tokenizes by using space split and returns ngrams
+        :param grade_level:
+        :param n: n of n-gram (so 3 for a 3-gram)
+        :return: ngrams object
+        """
+        tokens = [token for token in self.article_text(grade_level).split(" ") if token != ""]
+
+        return ngrams(tokens, n)
+
 
 class Library(object):
     """
@@ -53,28 +92,46 @@ class Library(object):
         """
         self.path = path
         self.metadata = pd.read_csv(path + 'articles_metadata.csv')
-        self.library = None
+        self.all_articles = defaultdict() # dict of dict of articles. May be unnecessary
+        self.grade_level_tokenized_sentences = defaultdict()
 
-    def create_library(self):
-        self.library = defaultdict(Article)
+        self.metadata.loc[:, 'grade_level'] = self.metadata.grade_level.astype('int')
+
+    def create_grade_level_library(self):
+        self.all_articles = defaultdict(Article)
 
         for row in self.metadata.itertuples():
 
             # do some kind of default dict thing where we add grade levels if article already exists
-            if not self.library.get(row.slug):
-                self.library[row.slug] = Article(row.slug, row.title, row.language, self.path)
-            self.library[row.slug].add_grade_level_version_map(row.grade_level, row.version)
+            if not self.all_articles.get(row.slug):
+                self.all_articles[row.slug] = Article(row.slug, row.title, row.language, self.path)
+            self.all_articles[row.slug].add_grade_level_version_map(row.grade_level, row.version)
+
+            sent_tokens = tokenize_sentences(self.path,
+                                    row.slug,
+                                    row.language,
+                                    row.version)
+
+            if not self.grade_level_tokenized_sentences.get(row.grade_level):
+                self.grade_level_tokenized_sentences[row.grade_level] = sent_tokens
+            else:
+                self.grade_level_tokenized_sentences[row.grade_level].extend(sent_tokens)
+
+    def grade_level_vocabulary(self, grade_level):
+        return set(self.grade_level_tokenized_sentences[grade_level])
+
+    def grade_level_ngrams(self, grade_level, n):
+        return list(ngrams(self.grade_level_tokenized_sentences.get(grade_level), n))
 
 
 def main():
     # Showing how you could use this
-    path = '/Users/stephanie/data/newsela_article_corpus_2016-01-29/'
+    path = '/Users/stzeng/code/github/autograder/data/newsela_article_corpus_2016-01-29/'
     library = Library(path)
-    library.create_library()
-    print(library.library['zuckerberg-internet'].article_text(4.0))
-    print(library.library['zuckerberg-internet'].grade_levels)
+    library.create_grade_level_library()
+    print(library.all_articles['zuckerberg-internet'].article_text(4.0))
+    print(library.all_articles['zuckerberg-internet'].grade_levels)
 
-    print("temp code")
 
 if __name__ == "__main__":
     main()
