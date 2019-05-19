@@ -22,7 +22,7 @@ def tokenize_sentences(path, slug, language, grade_level):
     all_words = []
     for sentence in sentence_tokenize_list:
         sentence = sentence.rstrip('.!?')
-        tokens = nltk.re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*\n", sentence)
+        tokens = nltk.re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*", sentence)
         all_words.append('<s>')
         all_words.extend(tokens)
         all_words.append('</s>')
