@@ -56,6 +56,7 @@ def split_article(article_text, grade_level, filename):
                 all_filenames.append(filename)
     return all_sentences, all_grades, all_filenames
 
+
 #build up a dictionary of split up sentences
 
 def main():
