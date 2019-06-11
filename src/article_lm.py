@@ -90,8 +90,7 @@ class ArticleLM(object):
 
     def get_article_text(self, filename):
         """
-        Returns
-        :return:
+        :return: text from article
         """
         txt = open(self.path_to_data + '/articles/' + filename, 'r')
         return txt.read()
