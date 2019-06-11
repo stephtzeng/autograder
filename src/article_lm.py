@@ -1,27 +1,17 @@
 from nltk import sent_tokenize, word_tokenize
 import pandas as pd
-import argparse
 import random
 from collections import defaultdict
 import os
 import numpy as np
 import subprocess
 import pandas as pd
-import sqlalchemy as sa
-from sqlalchemy.engine import url as sa_url
 import re
 import kenlm
 import matplotlib.pyplot as plt
 import seaborn as sns
-from settings import conn_args
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
-
-db_connect_url = sa_url.URL(**conn_args)
-engine = sa.create_engine(db_connect_url)
-
-
-def df_from_query(query):
-    return pd.read_sql(query, engine)
+from sklearn.linear_model import LinearRegression
 
 
 class ArticleLM(object):
@@ -77,19 +67,6 @@ class ArticleLM(object):
                 self.metadata_split = self.metadata_split[self.metadata_split.is_original == False]
 
         except FileNotFoundError:
-            is_original_q = """
-            SELECT ah.slug AS slug,
-                   -- al.article_header_id AS article_header_id,
-                   CAST(al.grade_level AS int) AS grade_level,
-                   al.is_original AS is_original
-            FROM public.article_levels al
-            JOIN public.article_headers ah
-                ON al.article_header_id = ah.article_header_id
-            WHERE ah.slug in {}
-            """.format(tuple(self.metadata.slug.unique()))
-            is_original = df_from_query(is_original_q)
-
-            self.metadata_split = pd.merge(self.metadata_split, is_original, on=['slug', 'grade_level'], how='left')
             self.metadata_split.loc[:, 'level'] = ['easy' if x <= 5 else 'hard' for x in
                                                    self.metadata_split.grade_level]
 
@@ -135,10 +112,7 @@ class ArticleLM(object):
         for p in paragraphs:
             sentences_list = sent_tokenize(p)
             sentences_list = [i for i in sentences_list if len(i) > 0]  # prevents blank sentences from being added
-            # print('found {} sentences'.format(len(sentences_list)))
             for sentence in sentences_list:
-                #             sentence = sentence.rstrip(
-                #                 '.!?;').lower()  # remove ending punctuation and put the sentence into lower case
                 sentence = sentence.lower()
                 # data pre-processing step to remove embedded http links
                 if len(sentence) > 1:
@@ -149,7 +123,6 @@ class ArticleLM(object):
                 # data pre-processing step to remove and html tags
                 sentence = re.sub(clean, '', sentence)  # remove any html tags that are present
                 if len(sentence) > 1:
-                    # tokens = nltk.re.findall(r"\w+(?:[-']\w+)*|'|[-.(]+|\S\w*", sentence)
                     all_sentences.append(' '.join(word_tokenize(sentence)))
         return all_sentences
 
@@ -165,7 +138,6 @@ class ArticleLM(object):
             if row.language == 'en':
                 text = self.get_article_text(row.filename)
                 sentences = self.split_article(text)
-                # sentences = [' '.join(word_tokenize(sentence)).lower() for sentence in sentences]
 
                 if self.level == 'binary':
                     key = row.level
@@ -250,7 +222,7 @@ class ArticleLM(object):
         sample_perp_df.columns = sorted(self.models.keys())
 
         sample_perp_df.loc[:, 'min_perplexity'] = sample_perp_df.idxmin(axis=1, skipna=True)
-        # sample_perp_df.loc[:, 'max_perplexity'] = sample_perp_df.idxmax(axis=1, skipna=True)
+
         return sample_perp_df
 
     def compute_all_sentences_best_guess(self, levels_considered):
@@ -322,7 +294,6 @@ class ArticleLM(object):
             sample_perp_df.columns = sorted(self.models.keys())
 
             sample_perp_df.loc[:, 'min_perplexity'] = sample_perp_df.idxmin(axis=1, skipna=True)
-            # sample_perp_df.loc[:, 'max_perplexity'] = sample_perp_df.idxmax(axis=1, skipna=True)
             sample_perp_df.loc[:, 'true_gl'] = article_gl[1]
             sample_perp_df.loc[:, 'article'] = article_gl[0]
 
@@ -351,8 +322,6 @@ class ArticleLM(object):
         fig = plt.figure(figsize=(10, 8))
         ax = fig.gca()
         ax.set_title("Grade Level Distributions")
-        # ax.set_xlabel("True Grade Level")
-        # ax.set_ylabel("Predicted Grade Level")
         sns.boxplot(ax=ax, x="true_gl", y="predicted_gl", data=means)
         ax.set_xlabel("True Grade Level")
         ax.set_ylabel("Predicted Grade Level, using Means")
@@ -362,36 +331,6 @@ class ArticleLM(object):
         For binary models, returns df containing best guess for the entire article - hard or easy?
         :return:
         """
-        # if split_type == 'val':
-        #     # article sentences here is a dict, key is article, maps to all its sentences
-        #     article_sentences = self.article_val_sentences
-        # elif split_type == 'test':
-        #     article_sentences = self.article_test_sentences
-        # elif split_type == 'train':
-        #     article_sentences = self.article_train_sentences
-        #
-        # iter = 0
-        # article_df = pd.DataFrame({})
-        # for article_gl in article_sentences.keys():
-        #     #     mean_guess, median_guess = self.compute_perplexity_entire_article(article_sentences[article_gl])
-        #
-        #     sample_perp = dict()
-        #     for ix, sentence in enumerate(article_sentences[article_gl]):
-        #         perplexities = self.compute_sentence_perplexities(sentence)
-        #         sample_perp[ix] = perplexities
-        #     sample_perp_df = pd.DataFrame(sample_perp).T
-        #     sample_perp_df.columns = sorted(self.models.keys())
-        #
-        #     sample_perp_df.loc[:, 'min_perplexity'] = sample_perp_df.idxmin(axis=1, skipna=True)
-        #     sample_perp_df.loc[:, 'true_gl'] = article_gl[1]
-        #     sample_perp_df.loc[:, 'article'] = article_gl[0]
-        #
-        #     article_df = pd.concat([article_df, sample_perp_df])
-        #
-        #     iter += 1
-        #
-        #     if iter % 10 == 0:
-        #         print("iteration {}, article {}".format(iter, article_gl))
 
         most_common = article_df.groupby(['article', 'true_gl']).agg(lambda x: x.value_counts().index[0])
         most_common = most_common.reset_index()
@@ -418,7 +357,6 @@ class ArticleLM(object):
         iter = 0
         article_df = pd.DataFrame({})
         for article_gl in article_sentences.keys():
-            #     mean_guess, median_guess = self.compute_perplexity_entire_article(article_sentences[article_gl])
 
             sample_perp = dict()
             for ix, sentence in enumerate(article_sentences[article_gl]):
@@ -462,6 +400,61 @@ class ArticleLM(object):
         elif self.level == 'grade_level':
             best_guess = self._compute_article_best_guess_grade_levels(article_df)
             return article_df, best_guess
+
+    def fit_linear_regression(self, article_train_df):
+        """
+        Fits linear regression from the training data to predict grade level of the entire article
+        It will take all articles, calculate % of each predicted grade level for each sentence,
+        and use those as inputs to predict a grade level (y)
+        :param article_train_df: output of `compute_article_to_sentence_guess('train')`
+        :return: clf (the fitted linear regression)
+        """
+
+        article_pred_gl_count = (np.array(article_train_df[['true_gl', 'article', 'predicted_gl']]
+                                          .pivot_table(columns='predicted_gl',
+                                                       index=['true_gl', 'article'],
+                                                       aggfunc=lambda x: len(x),
+                                                       fill_value=0)))
+
+        y = (np.array(article_train_df[['true_gl', 'article', 'predicted_gl']]
+                      .pivot_table(columns='predicted_gl',
+                                   index=['true_gl', 'article'],
+                                   aggfunc=lambda x: len(x),
+                                   fill_value=0).reset_index().true_gl))
+
+        X = np.divide(article_pred_gl_count, article_pred_gl_count.sum(axis=1).reshape(len(article_pred_gl_count), 1))
+
+        clf = LinearRegression()
+        clf.fit(X, y)
+
+        return clf
+
+    def compute_article_linear_regression_best_guess(self, article_split_df, clf):
+        """
+
+        :param article_split_df: output of `compute_article_to_sentence_guess()` depending on split_type
+        :param clf: output of fit_linear_regression
+        :return: error, accuracy, f1 score
+        """
+        split_df = (article_split_df[['true_gl', 'article', 'predicted_gl']]
+                    .pivot_table(columns='predicted_gl',
+                                 index=['true_gl', 'article'],
+                                 aggfunc=lambda x: len(x),
+                                 fill_value=0).reset_index()[['true_gl', 'article']])
+
+        split_df.loc[:, 'predicted_gl'] = list(clf.predict(X))
+
+        split_df.loc[:, 'predicted_gl'] = split_df.predicted_gl.astype('int')
+
+        split_df.loc[:, 'true_easy'] = [1 if x <= 5 else 0 for x in split_df.true_gl]
+        split_df.loc[:, 'predicted_easy'] = [1 if x <= 5 else 0 for x in split_df.predicted_gl]
+
+        error = 1 - accuracy_score(split_df.true_easy, split_df.predicted_easy)
+        accuracy = accuracy_score(split_df.true_easy, split_df.predicted_easy)
+        f1 = f1_score(split_df.true_easy, split_df.predicted_easy)
+
+        return error, accuracy, f1
+
 
     def compute_scores_grade_level(self, best_guess):
         """
@@ -518,4 +511,4 @@ class ArticleLM(object):
 
         binary_f1 = f1_score(best_guess.true_gl, best_guess.predicted_gl, pos_label='easy')
 
-        return (cm, binary_accuracy, binary_f1)
+        return cm, binary_accuracy, binary_f1
