@@ -27,10 +27,10 @@ articleLM = ArticleLM(path_to_data,
 where 5 denotes 5-gram, and you are creating grade level models, and original articles are not used.
 
 ## RNN
-For training the RNN:
+For training the RNN, run the following 2 files:
 ```python
---> run data_process.py
---> run train_model_gce_REG.py
+data_process.py
+train_model_gce_REG.py
 ```
 
 Note that the RNN must be run on a GPU with Tensorflow 1.13 (other versions have different functions) and Keras.
