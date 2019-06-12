@@ -16,15 +16,37 @@ path_to_kenlm = 'path/to/github/kenlm'
 path_to_arpa = path_to_kenlm + '/lm'
 ```
 
-Usage:
+#### Usage:
 
+In the following example, 5 denotes 5-gram, you are creating grade level models, and original articles are not used.
 ```python
 from article_lm import ArticleLM
 articleLM = ArticleLM(path_to_data,
                       path_to_kenlm,
                       path_to_arpa, 5, 'grade_level', False)
+articleLM.build_data()
+articleLM.train_all_arpas()
+article_val_df, means_val = articleLM.compute_article_best_guess('val')
+articleLM.plot_article_best_grade_levels(means_val)
+(grade_level_cm, raw_accuracy, banded_accuracy,
+ binary_cm, binary_accuracy, binary_f1) = articleLM.compute_scores_grade_level(means_val)
+ 
+ 
+print("accuracy", binary_accuracy)
+print("error", 1-binary_accuracy)
+print("f1", binary_f1)
 ```
-where 5 denotes 5-gram, and you are creating grade level models, and original articles are not used.
+#### Outputs:
+```
+accuracy 0.8469
+error 0.15305
+f1 0.8843
+```
+![Distribution of article predictions](plots/box_whisker_kneser_ney.png)
+This plots represents a distribution of predicted grade levels per article, plotted against true grade levels.
+
+Another representation of the test results is this confusion matrix:
+![Confusion Matrix, Kneser Ney](plots/confusion_matrix_kneser_ney.png)
 
 ## RNN
 For training the RNN, run the following 2 files:
