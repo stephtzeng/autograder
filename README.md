@@ -1,7 +1,9 @@
 # autograder
-Automatic grade level complexity classifier
+Automatic grade level complexity classifier.
 
-### Kneser-Ney Smoothing
+We explored 3 different models, as follows.
+
+## Kneser-Ney Smoothing
 To use `article_process.py`, you will need to install from: https://github.com/kpu/kenlm.
 
 To instantiate the object, you will need the paths to:
@@ -25,9 +27,11 @@ articleLM = ArticleLM(path_to_data,
 where 5 denotes 5-gram, and you are creating grade level models, and original articles are not used.
 
 ## RNN
-For trdaining the RNN:
+For training the RNN:
+```python
 --> run data_process.py
 --> run train_model_gce_REG.py
+```
 
 Note that the RNN must be run on a GPU with Tensorflow 1.13 (other versions have different functions) and Keras.
 
