@@ -42,9 +42,10 @@ All run history is logged and saved.
 
 ## Naive Bayes
 For training the Naive Bayes (NB) classifier plus added linear classifier:
-'''python
+```python
 NB_classifier_v5.py
-'''
+```
+
 This script will run through several different combinations of settings including:
 - numbers of sentences in each text segment chunk
 - maxmimum number of n-grams
