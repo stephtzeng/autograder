@@ -248,9 +248,11 @@ def split_and_transform_data(X, y, art_id, n_grams):
     print('The shape of the y test set = {}'.format(np.shape(y_test)))
 
 
-    #do a tfidf transformation on the training data only
+    #do a tfidf transformation 
     tfidf_transformer = TfidfTransformer()
     X_train_tfidf = tfidf_transformer.fit_transform(X_train)  # returns frequences
+    X_val = tfidf_transformer.fit_transform(X_val)
+    X_test = tfidf_transformer.fit_transform(X_test)
 
     # return of a dictionary of the classes
     classes = np.unique(y)
