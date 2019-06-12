@@ -59,4 +59,5 @@ entire articles. The linear classifiers explored include:
 - median
 - logistic regression
 - linear regression
+
 For each combination, the train accuracy, test accuracy, and test f1 score are reported. All results are saved to file.
