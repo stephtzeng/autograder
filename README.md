@@ -33,7 +33,7 @@ data_process.py
 train_model_gce_REG.py
 ```
 
-Note that the RNN must be run on a GPU with Tensorflow 1.13 (other versions have different functions) and Keras.
+Note that the RNN must be run on a GPU with Tensorflow 1.13 (other versions have different keras functions implemented) and Keras.
 
 The script will run through varying combinations of L1 and L2 regularizations on the input, bias and recurrent 
 weights of the LSTM 1-layer model. Note that the script can be run on both binary and multiclass datasets. Also note that 
@@ -42,8 +42,9 @@ All run history is logged and saved.
 
 ## Naive Bayes
 For training the Naive Bayes (NB) classifier plus added linear classifier:
---> NB_classifier_v5.py
-
+'''python
+NB_classifier_v5.py
+'''
 This script will run through several different combinations of settings including:
 - numbers of sentences in each text segment chunk
 - maxmimum number of n-grams
