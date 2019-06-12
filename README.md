@@ -67,6 +67,11 @@ weights of the LSTM 1-layer model. Note that the script can be run on both binar
 the model is fixed with only 1 LSTM layer with 100 neurons but this can easily be modified for more layers and neurons.
 All run history is logged and saved.
 
+An example of a training run showing a comparison of the number of neurons per layer:
+![Example of a (bad) training run](plots/neuron_comp.png)
+
+Note the low validation accuracy and increasingly validation loss indicating that the RNN is overfit.
+
 ## Naive Bayes
 For training the Naive Bayes (NB) classifier plus added linear classifier:
 ```python
@@ -88,3 +93,12 @@ entire articles. The linear classifiers explored include:
 - linear regression
 
 For each combination, the train accuracy, test accuracy, and test f1 score are reported. All results are saved to file.
+An example of the output of the raw NB classifier for the multiclass case is shown below via a confusion matrix:
+
+![Example of NB predictions](plots/bestNB_9class_v2.png)
+
+Note that the NB classifier is adept at distinguishing between "easy" versus "hard" articles. The NB predictions are then fed into a secondary classifier. An example of the resulting predictions after the NB predictions are fed into a linear regression are shown below:
+
+![Example of NB plus secondary linear regression](plots/bestNB_9class_v2_lin1.png)
+
+Note that the secondary classifier acts to "smooth" out the two NB clusters of "easy" and "hard" articles.
