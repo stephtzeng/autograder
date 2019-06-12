@@ -42,7 +42,12 @@ accuracy 0.8469
 error 0.15305
 f1 0.8843
 ```
+
+Both of the following plots shows results for the Kneser-Ney N-gram Smoothing approach, using all available articles.
+They use the mean to predict a grade level for the entire article, after predicting each sentence grade level. 
+
 ![Distribution of article predictions](plots/box_whisker_kneser_ney.png)
+
 This plots represents a distribution of predicted grade levels per article, plotted against true grade levels.
 
 Another representation of the test results is this confusion matrix:
