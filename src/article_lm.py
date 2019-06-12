@@ -1,3 +1,10 @@
+"""
+article_lm will allow you to train language models using the KenLM package and find best classes, both
+using multi-class classification as well as binary.
+
+author: Stephanie Tzeng
+"""
+
 from nltk import sent_tokenize, word_tokenize
 import pandas as pd
 import random
@@ -22,7 +29,6 @@ class ArticleLM(object):
     def __init__(self, path_to_data, path_to_kenlm, path_to_arpa, n, level, keep_orig=False):
         """
         :param path_to_data:
-
         :param path_to_kenlm:
         :param path_to_arpa:
         :param n: n for n-gram as top-level (like 5 for 5-gram)
@@ -126,6 +132,9 @@ class ArticleLM(object):
         return all_sentences
 
     def build_data(self):
+        """
+        Build all of the data for the model. Must be executed pull in data
+        """
         self.level_sentences['train'] = dict()
         self.level_sentences['val'] = dict()
         self.level_sentences['test'] = dict()
@@ -166,6 +175,11 @@ class ArticleLM(object):
         return '\n'.join(sentences)
 
     def train_arpa(self, level):
+        """
+        Trains a single arpa file depending on the level chosen.
+        :param level: for self.level == 'binary', can be either 'easy' or 'hard'
+                      for self.level == 'grade_level', is the grade level in question
+        """
 
         training_text = self.text_sentences_for_grade(level, 'train', verbose=True)
         arpa_path = self.path_to_arpa + '/gl_%s_n%s.arpa' % (level, self.n)
@@ -176,6 +190,9 @@ class ArticleLM(object):
         print(out[1].decode('utf-8'))
 
     def train_all_arpas(self):
+        """
+        Trains all arpas at once
+        """
 
         for level in self.level_sentences.get('train').keys():
             print('Processing {}'.format(level))
@@ -183,7 +200,6 @@ class ArticleLM(object):
 
     def retrieve_models(self):
         for gl in self.level_sentences['train'].keys():
-            # for gl in [2, 3, 4, 5, 6, 7, 8, 9]:
             try:
                 self.models[gl] = kenlm.LanguageModel(self.path_to_arpa + '/gl_{}_n{}.arpa'.format(gl, self.n))
             except OSError:
